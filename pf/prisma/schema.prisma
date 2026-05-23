@@ -28,21 +28,10 @@ model Sentence {
   id          String            @id @default(uuid())
   content     String         // 暗唱文 (NOT NULL)
   translation String         // 日本語訳 (NOT NULL)
-  
-  // LLMで生成した文章
-  casualText  String?        // カジュアル
-  formalText  String?        // フォーマル
-
+  casualText  String?        // LLMが作成したカジュアル版文章
+  formalText  String?        // 　　　 　〃　フォーマル 〃
   created_at  DateTime       @default(now())
   updated_at  DateTime       @updatedAt
-  
-  status_id   String            // 習得状況のID
-  status      SentenceStatus @relation(fields: [status_id], references: [id]) // 習得状況テーブルと紐づけ
-}
-
-// 3. 習得状況
-model SentenceStatus {
-  id        String        @id @default(uuid())
-  name      String     // 習得状況（覚えてない、怪しい、覚えた）
-  sentences Sentence[] // 紐づく暗唱文のリスト
+  status      String         // 習得状況　覚えてない=2,怪しい=1,覚えた=0
+  statusUpdated_at DateTime?  // ステータスが変更したときの時刻
 }
