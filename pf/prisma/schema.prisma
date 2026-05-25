@@ -32,6 +32,6 @@ model Sentence {
   formalText  String?        // 　　　 　〃　フォーマル 〃
   created_at  DateTime       @default(now())
   updated_at  DateTime       @updatedAt
-  status      String         // 習得状況　覚えてない=2,怪しい=1,覚えた=0
+  status_id      String         // 習得状況　覚えてない=2,怪しい=1,覚えた=0
   statusUpdated_at DateTime?  // ステータスが変更したときの時刻
 }
