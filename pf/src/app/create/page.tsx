@@ -11,10 +11,9 @@ const card: Sentence = {
   formalText: null,
   created_at: new Date(),
   updated_at: new Date(),
-  status_id: "",
+  status_id: "", // 習得状況　覚えてない=2,怪しい=1,覚えた=0
+  statusUpdated_at: new Date(),
 };
-
-
 
 export default function Create() {
   const [sentence, setSentence] = useState<Sentence[]>([card]);
