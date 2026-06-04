@@ -4,21 +4,27 @@ import { z } from "zod";
 import { useState } from "react";
 
 const signupSchema = z.object({
-  id: z.string().min(1, "IDは必須です"),
+  id: z
+    .string()
+    .min(1, "IDは必須です")
+    .regex(/^[a-zA-Z0-9_]+$/, "IDは英数字と_だけで入力してください"),
   username: z.string().min(1, "ユーザー名は必須です"),
   email: z.string().email("メールアドレスの形式が正しくありません"),
   password: z.string().min(8, "パスワードは8文字以上でなければなりません"),
 });
 
+type FieldErrors = Record<string, string[] | undefined>;
+
 export default function Signup() {
-  const [errors, setErrors] = useState<Record<string, string[] | undefined>>(
-    {},
-  );
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [message, setMessage] = useState("");
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setMessage("");
 
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
 
     const values = {
       id: String(formData.get("id") ?? ""),
@@ -36,7 +42,31 @@ export default function Signup() {
 
     setErrors({});
 
-    console.log(result.data);
+    try {
+      const response = await fetch("/api/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(result.data),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.fieldErrors) {
+          setErrors(data.fieldErrors);
+        }
+
+        setMessage(data.message ?? "登録に失敗しました");
+        return;
+      }
+
+      form.reset();
+      setMessage(`${data.user?.username ?? "ユーザー"}さんを登録しました`);
+    } catch {
+      setMessage("通信に失敗しました。時間をおいてもう一度お試しください。");
+    }
   }
 
   return (
@@ -111,11 +141,21 @@ export default function Signup() {
           </div>
 
           <div className="mt-4 flex flex-col gap-4">
-            <button className="w-full rounded-2xl bg-sky-500 py-3.5 font-bold text-white shadow-lg shadow-sky-100 hover:bg-sky-600 active:scale-95 transition-all">
+            {message && (
+              <p className="text-sm text-slate-600">{message}</p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full rounded-2xl bg-sky-500 py-3.5 font-bold text-white shadow-lg shadow-sky-100 hover:bg-sky-600 active:scale-95 transition-all"
+            >
               新規登録する
             </button>
 
-            <button className="w-full py-2 text-sm font-medium text-slate-400 hover:text-sky-600 transition-colors">
+            <button
+              type="button"
+              className="w-full py-2 text-sm font-medium text-slate-400 hover:text-sky-600 transition-colors"
+            >
               すでにアカウントをお持ちの方はこちら
             </button>
           </div>
