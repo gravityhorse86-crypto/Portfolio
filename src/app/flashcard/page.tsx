@@ -2,15 +2,15 @@
 import { useEffect, useState } from "react";
 
 export default function Flashcard() {
-    const [isFlipped, setIsFlipped] = useState(false);
-    const flipCard = () => {
-    setIsFlipped((current) => !current); 
+  const [isFlipped, setIsFlipped] = useState(false);
+  const flipCard = () => {
+    setIsFlipped((current) => !current);
   };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.code === "Space") {
-        event.preventDefault(); 
+        event.preventDefault();
         flipCard();
       }
     };
@@ -20,16 +20,15 @@ export default function Flashcard() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);  
+  }, []);
 
-
-return (
+  
+  return (
     <main className="min-h-screen bg-slate-50 p-6 flex items-center justify-center">
-   
       <button
         type="button"
-        onClick={flipCard} 
-        className="group h-80 w-full max-w-xl [perspective:1000px]" 
+        onClick={flipCard}
+        className="group h-80 w-full max-w-xl [perspective:1000px]"
         aria-label="フラッシュカードを裏返す"
       >
         <div
