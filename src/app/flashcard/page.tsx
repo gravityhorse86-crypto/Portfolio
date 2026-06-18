@@ -1,54 +1,44 @@
-"use client";
-import { useEffect, useState } from "react";
+import type { Prisma } from "@prisma/client";
 
-export default function Flashcard() {
-  const [isFlipped, setIsFlipped] = useState(false);
-  const flipCard = () => {
-    setIsFlipped((current) => !current);
+import { prisma } from "@/lib/prisma";
+
+import { FlashcardClient } from "./FlashcardClient";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+type FlashcardPageProps = {
+  searchParams: Promise<{
+    status?: string;
+    sort?: string;
+  }>;
+};
+
+export default async function Flashcard({ searchParams }: FlashcardPageProps) {
+  const params = await searchParams;
+  const where: Prisma.SentenceWhereInput = {};
+
+  if (
+    params.status === "0" ||
+    params.status === "1" ||
+    params.status === "2"
+  ) {
+    where.status_id = params.status;
+  }
+
+  const orderBy: Prisma.SentenceOrderByWithRelationInput = {
+    created_at: params.sort === "oldest" ? "asc" : "desc",
   };
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === "Space") {
-        event.preventDefault();
-        flipCard();
-      }
-    };
+  const sentences = await prisma.sentence.findMany({
+    where,
+    orderBy,
+    select: {
+      id: true,
+      content: true,
+      translation: true,
+    },
+  });
 
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
-
-  
-  return (
-    <main className="min-h-screen bg-slate-50 p-6 flex items-center justify-center">
-      <button
-        type="button"
-        onClick={flipCard}
-        className="group h-80 w-full max-w-xl [perspective:1000px]"
-        aria-label="フラッシュカードを裏返す"
-      >
-        <div
-          className={`relative h-full w-full transition-transform duration-700 [transform-style:preserve-3d] ${
-            isFlipped ? "[transform:rotateY(180deg)]" : ""
-          }`}
-        >
-          <section className="absolute inset-0 flex items-center justify-center rounded-lg bg-white p-8 text-center shadow-lg [backface-visibility:hidden]">
-            <p className="text-2xl font-semibold leading-relaxed text-slate-800">
-              I want to improve my ability to memorize English sentences.
-            </p>
-          </section>
-
-          <section className="absolute inset-0 flex items-center justify-center rounded-lg bg-indigo-600 p-8 text-center shadow-lg [backface-visibility:hidden] [transform:rotateY(180deg)]">
-            <p className="text-2xl font-semibold leading-relaxed text-white">
-              英文を暗記する力を伸ばしたいです。
-            </p>
-          </section>
-        </div>
-      </button>
-    </main>
-  );
+  return <FlashcardClient sentences={sentences} />;
 }
