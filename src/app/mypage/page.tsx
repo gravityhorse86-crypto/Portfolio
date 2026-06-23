@@ -1,18 +1,38 @@
 "use client";
 
 import { useState } from "react";
+import { z } from "zod";
 
 import { FlashcardSettingsModal } from "./FlashcardSettingsModal";
+import { CharacterStatus } from "./CharacterStatus";
 
 type SentenceRow = {
   content: string;
   translation: string;
 };
 
+type SentenceRowErrors = Partial<Record<keyof SentenceRow, string>>;
+
+const sentenceSchema = z.object({
+  content: z
+    .string()
+    .trim()
+    .min(1, "英文を入力してください")
+    .refine((value) => value.trim().split(/\s+/).length <= 100, {
+      message: "英文は100語以内で入力してください",
+    }),
+  translation: z
+    .string()
+    .trim()
+    .min(1, "日本語訳を入力してください")
+    .max(200, "日本語訳は200文字以内で入力してください"),
+});
+
 export default function MyPage() {
   const [rows, setRows] = useState<SentenceRow[]>([
     { content: "", translation: "" },
   ]);
+  const [rowErrors, setRowErrors] = useState<SentenceRowErrors[]>([{}]);
   const [message, setMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isFlashcardSettingsOpen, setIsFlashcardSettingsOpen] =
@@ -20,6 +40,7 @@ export default function MyPage() {
 
   function addRow() {
     setRows([...rows, { content: "", translation: "" }]);
+    setRowErrors([...rowErrors, {}]);
   }
 
   function updateRow(
@@ -32,19 +53,65 @@ export default function MyPage() {
         rowIndex === index ? { ...row, [key]: value } : row,
       ),
     );
+    setRowErrors(
+      rowErrors.map((error, rowIndex) =>
+        rowIndex === index ? { ...error, [key]: undefined } : error,
+      ),
+    );
   }
 
   async function saveRows() {
     setMessage("");
+    setRowErrors(rows.map(() => ({})));
 
     const sentences = rows
       .map((row) => ({
         content: row.content.trim(),
         translation: row.translation.trim(),
-      }))
-      .filter((row) => row.content !== "" || row.translation !== "");
+      }));
 
-    if (sentences.length === 0) {
+    const nextRowErrors = sentences.map<SentenceRowErrors>((row) => {
+      if (row.content === "" && row.translation === "") {
+        return {};
+      }
+
+      const result = sentenceSchema.safeParse(row);
+
+      if (result.success) {
+        return {};
+      }
+
+      const fieldErrors = result.error.flatten().fieldErrors;
+
+      return {
+        content: fieldErrors.content?.[0],
+        translation: fieldErrors.translation?.[0],
+      };
+    });
+
+    const completedSentences = sentences.filter((row, index) => {
+      const rowError = nextRowErrors[index];
+
+      return (
+        row.content !== "" &&
+        row.translation !== "" &&
+        !rowError.content &&
+        !rowError.translation
+      );
+    });
+
+    const hasValidationError = nextRowErrors.some(
+      (error) => error.content || error.translation,
+    );
+
+    if (hasValidationError) {
+      setRowErrors(nextRowErrors);
+      setMessage("入力内容を確認してください。");
+      return;
+    }
+
+    if (completedSentences.length === 0) {
+      setRowErrors(nextRowErrors);
       setMessage("保存する英文と日本語訳を入力してください。");
       return;
     }
@@ -57,7 +124,7 @@ export default function MyPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ sentences }),
+        body: JSON.stringify({ sentences: completedSentences }),
       });
 
       const data = await response.json();
@@ -68,7 +135,8 @@ export default function MyPage() {
       }
 
       setRows([{ content: "", translation: "" }]);
-      setMessage(`${data.count ?? sentences.length}件保存しました。`);
+      setRowErrors([{}]);
+      setMessage(`${data.count ?? completedSentences.length}件保存しました。`);
     } catch {
       setMessage("通信に失敗しました。時間をおいてもう一度試してください。");
     } finally {
@@ -90,6 +158,8 @@ export default function MyPage() {
             <p className="mt-4 text-slate-600">1ヶ月以内に暗唱した数：</p>
             <p className="text-slate-600">これまでに暗唱した数：</p>
           </div>
+
+          <CharacterStatus />
 
           <button
             type="button"
@@ -117,6 +187,11 @@ export default function MyPage() {
                     placeholder="例: I've been looking forward to meeting you."
                     className="min-h-24 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
                   />
+                  {rowErrors[index]?.content && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {rowErrors[index]?.content}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -132,6 +207,11 @@ export default function MyPage() {
                     maxLength={200}
                     className="min-h-24 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
                   />
+                  {rowErrors[index]?.translation && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {rowErrors[index]?.translation}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}

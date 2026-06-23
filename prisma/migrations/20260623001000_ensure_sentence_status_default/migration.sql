@@ -1,0 +1,2 @@
+ALTER TABLE "Sentence" ADD COLUMN IF NOT EXISTS "statusUpdated_at" TIMESTAMP(3);
+ALTER TABLE "Sentence" ALTER COLUMN "status_id" SET DEFAULT '2';

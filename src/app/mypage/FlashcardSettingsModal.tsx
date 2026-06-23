@@ -28,6 +28,7 @@ export function FlashcardSettingsModal({
   const router = useRouter();
   const [status, setStatus] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortOrder>("newest");
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -56,6 +57,7 @@ export function FlashcardSettingsModal({
 
     params.set("sort", sort);
 
+    setIsStarting(true);
     router.push(`/flashcard?${params.toString()}`);
   }
 
@@ -124,16 +126,18 @@ export function FlashcardSettingsModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+            disabled={isStarting}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
             キャンセル
           </button>
           <button
             type="button"
             onClick={startFlashcard}
-            className="rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-indigo-700"
+            disabled={isStarting}
+            className="rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
           >
-            スタート
+            {isStarting ? "読み込み中..." : "スタート"}
           </button>
         </div>
       </div>

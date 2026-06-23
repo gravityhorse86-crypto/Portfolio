@@ -1,7 +1,9 @@
+import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { isPasswordCorrect } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { setSessionCookie } from "@/lib/session";
 
 export const runtime = "nodejs";
 
@@ -11,7 +13,17 @@ const signinSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { message: "リクエストの形式が正しくありません。" },
+      { status: 400 },
+    );
+  }
+
   const result = signinSchema.safeParse(body);
 
   if (!result.success) {
@@ -52,11 +64,14 @@ export async function POST(request: Request) {
     );
   }
 
-  return Response.json({
+  const response = NextResponse.json({
     user: {
       id: user.id,
       username: user.username,
       email: user.email,
     },
   });
+  setSessionCookie(response, user.id);
+
+  return response;
 }

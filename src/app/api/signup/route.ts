@@ -1,7 +1,10 @@
+import { Prisma } from "@prisma/client";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createPasswordHash } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { setSessionCookie } from "@/lib/session";
 
 export const runtime = "nodejs";
 
@@ -16,7 +19,17 @@ const signupSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { message: "リクエストの形式が正しくありません。" },
+      { status: 400 },
+    );
+  }
+
   const result = signupSchema.safeParse(body);
 
   if (!result.success) {
@@ -68,8 +81,21 @@ export async function POST(request: Request) {
       },
     });
 
-    return Response.json({ user }, { status: 201 });
+    const response = NextResponse.json({ user }, { status: 201 });
+    setSessionCookie(response, user.id);
+
+    return response;
   } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return Response.json(
+        { message: "このIDまたはメールアドレスはすでに使われています" },
+        { status: 409 },
+      );
+    }
+
     console.error(error);
 
     return Response.json(

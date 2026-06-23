@@ -18,11 +18,7 @@ export default async function Flashcard({ searchParams }: FlashcardPageProps) {
   const params = await searchParams;
   const where: Prisma.SentenceWhereInput = {};
 
-  if (
-    params.status === "0" ||
-    params.status === "1" ||
-    params.status === "2"
-  ) {
+  if (params.status === "0" || params.status === "1" || params.status === "2") {
     where.status_id = params.status;
   }
 

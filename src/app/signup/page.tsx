@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useState } from "react";
 
@@ -16,8 +18,10 @@ const signupSchema = z.object({
 type FieldErrors = Record<string, string[] | undefined>;
 
 export default function Signup() {
+  const router = useRouter();
   const [errors, setErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -41,6 +45,7 @@ export default function Signup() {
     }
 
     setErrors({});
+    setIsSubmitting(true);
 
     try {
       const response = await fetch("/api/signup", {
@@ -64,8 +69,11 @@ export default function Signup() {
 
       form.reset();
       setMessage(`${data.user?.username ?? "ユーザー"}さんを登録しました`);
+      router.push("/mypage");
     } catch {
       setMessage("通信に失敗しました。時間をおいてもう一度お試しください。");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -147,17 +155,18 @@ export default function Signup() {
 
             <button
               type="submit"
+              disabled={isSubmitting}
               className="w-full rounded-2xl bg-sky-500 py-3.5 font-bold text-white shadow-lg shadow-sky-100 hover:bg-sky-600 active:scale-95 transition-all"
             >
-              新規登録する
+              {isSubmitting ? "登録中..." : "新規登録する"}
             </button>
 
-            <button
-              type="button"
+            <Link
+              href="/signin"
               className="w-full py-2 text-sm font-medium text-slate-400 hover:text-sky-600 transition-colors"
             >
               すでにアカウントをお持ちの方はこちら
-            </button>
+            </Link>
           </div>
         </form>
       </div>

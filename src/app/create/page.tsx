@@ -1,23 +1,6 @@
 "use client";
 
-import { Sentence } from "@prisma/client";
-import { useState } from "react";
-
-const card: Sentence = {
-  id: "",
-  content: "",
-  translation: "",
-  casualText: null,
-  formalText: null,
-  created_at: new Date(),
-  updated_at: new Date(),
-  status_id: "", // 習得状況　覚えてない=2,怪しい=1,覚えた=0
-  statusUpdated_at: new Date(),
-};
-
 export default function Create() {
-  const [sentence, setSentence] = useState<Sentence[]>([card]);
-
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="mx-auto w-full max-w-md md:max-w-2xl bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">

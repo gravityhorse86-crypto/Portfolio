@@ -23,7 +23,17 @@ const requestSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { message: "リクエストの形式が正しくありません。" },
+      { status: 400 },
+    );
+  }
+
   const result = requestSchema.safeParse(body);
 
   if (!result.success) {

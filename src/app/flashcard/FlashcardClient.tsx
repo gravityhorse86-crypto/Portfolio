@@ -12,9 +12,32 @@ type FlashcardClientProps = {
   sentences: SentenceCard[];
 };
 
+type StatusValue = "0" | "1" | "2";
+
+const statusButtons: { label: string; value: StatusValue; className: string }[] =
+  [
+    {
+      label: "覚えてない",
+      value: "2",
+      className: "bg-rose-500 hover:bg-rose-600",
+    },
+    {
+      label: "怪しい",
+      value: "1",
+      className: "bg-amber-500 hover:bg-amber-600",
+    },
+    {
+      label: "覚えた",
+      value: "0",
+      className: "bg-emerald-500 hover:bg-emerald-600",
+    },
+  ];
+
 export function FlashcardClient({ sentences }: FlashcardClientProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState<StatusValue | null>(null);
+  const [statusMessage, setStatusMessage] = useState("");
 
   const currentSentence = sentences[currentIndex];
 
@@ -28,6 +51,7 @@ export function FlashcardClient({ sentences }: FlashcardClientProps) {
       if (sentences.length === 0) return;
 
       setIsFlipped(false);
+      setStatusMessage("");
       setCurrentIndex((current) => {
         if (direction === "prev") {
           return current === 0 ? sentences.length - 1 : current - 1;
@@ -37,6 +61,37 @@ export function FlashcardClient({ sentences }: FlashcardClientProps) {
       });
     },
     [sentences.length],
+  );
+
+  const updateStatus = useCallback(
+    async (statusValue: StatusValue) => {
+      if (!currentSentence || updatingStatus) return;
+
+      setUpdatingStatus(statusValue);
+      setStatusMessage("");
+
+      try {
+        const response = await fetch(`/api/sentences/${currentSentence.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status_id: statusValue }),
+        });
+
+        if (!response.ok) {
+          setStatusMessage("ステータスの更新に失敗しました。");
+          return;
+        }
+
+        setStatusMessage("ステータスを更新しました。");
+      } catch {
+        setStatusMessage("通信に失敗しました。");
+      } finally {
+        setUpdatingStatus(null);
+      }
+    },
+    [currentSentence, updatingStatus],
   );
 
   useEffect(() => {
@@ -112,7 +167,27 @@ export function FlashcardClient({ sentences }: FlashcardClientProps) {
           </div>
         </button>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
+        <div className="mt-6 grid grid-cols-3 gap-3">
+          {statusButtons.map((button) => (
+            <button
+              key={button.value}
+              type="button"
+              onClick={() => updateStatus(button.value)}
+              disabled={updatingStatus !== null}
+              className={`rounded-lg px-4 py-3 font-semibold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${button.className}`}
+            >
+              {button.label}
+            </button>
+          ))}
+        </div>
+
+        {statusMessage && (
+          <p className="mt-3 text-center text-sm text-slate-500">
+            {statusMessage}
+          </p>
+        )}
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={() => moveCard("prev")}
