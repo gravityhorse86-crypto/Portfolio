@@ -1,5 +1,3 @@
-import type { Prisma } from "@prisma/client";
-
 import { prisma } from "@/lib/prisma";
 
 import { FlashcardClient } from "./FlashcardClient";
@@ -16,13 +14,13 @@ type FlashcardPageProps = {
 
 export default async function Flashcard({ searchParams }: FlashcardPageProps) {
   const params = await searchParams;
-  const where: Prisma.SentenceWhereInput = {};
+  const where: { status_id?: "0" | "1" | "2" } = {};
 
   if (params.status === "0" || params.status === "1" || params.status === "2") {
     where.status_id = params.status;
   }
 
-  const orderBy: Prisma.SentenceOrderByWithRelationInput = {
+  const orderBy: { created_at: "asc" | "desc" } = {
     created_at: params.sort === "oldest" ? "asc" : "desc",
   };
 
