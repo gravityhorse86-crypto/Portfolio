@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 外国語暗唱アプリ
+外国語のスピーキング力を鍛える際、最も効率的な方法の一つである「暗唱」。
+本アプリは暗唱文をフラッシュカード形式でペーパーレス方式で学ぶことができます。
+## 開発の背景と本アプリの特徴
+単語や熟語など、短い語を暗記するアプリケーションは多々ありますが、「暗唱」に特化したアプリケーションは未だありません。
+本アプリケーションは、LMMによって文章をワンクリックでフォーマル化、インフォーマル化するなどの機能を備え、
+従来の紙ベースのフラッシュカードよりも効率的な学習が可能です。
+## URL
 
-## Getting Started
+## デモアカウント
+ID：
+パスワード：
+## 主な機能
+### フラッシュカード
+従来のフラッシュカードだけでなく、
+### マイページ
 
-First, run the development server:
+## 使用した技術
+フルスタックフレームワーク：Next.js
+フロントエンド：HTML5, CSS3(TailWind CSS), React
+バックエンド：Supabase, Prisma
+デプロイ：Vercel
+## 画面イメージ
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 今後の実装予定
+今後は、LLMとの連携で学習をより楽しく、効率的に進められるよう、以下のような実装を考えている。
+・AIにより、類似するシチュエーションの暗唱文の提示
+・Text to SpeechのAPIを用い、暗唱文を音声朗読
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
