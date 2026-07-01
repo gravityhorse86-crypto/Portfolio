@@ -1,9 +1,9 @@
-import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createPasswordHash, isPasswordCorrect } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { isPrismaErrorCode } from "@/lib/prisma-error";
 import { sessionCookieName, verifySessionToken } from "@/lib/session";
 
 export const runtime = "nodejs";
@@ -151,10 +151,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ user: updatedUser });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
+    if (isPrismaErrorCode(error, "P2002")) {
       return NextResponse.json(
         {
           fieldErrors: {

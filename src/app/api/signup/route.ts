@@ -1,9 +1,9 @@
-import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createPasswordHash } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { isPrismaErrorCode } from "@/lib/prisma-error";
 import { setSessionCookie } from "@/lib/session";
 
 export const runtime = "nodejs";
@@ -86,10 +86,7 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
+    if (isPrismaErrorCode(error, "P2002")) {
       return Response.json(
         { message: "このIDまたはメールアドレスはすでに使われています" },
         { status: 409 },

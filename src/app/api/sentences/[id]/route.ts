@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { isPrismaErrorCode } from "@/lib/prisma-error";
 
 export const runtime = "nodejs";
 
@@ -49,10 +49,7 @@ export async function PATCH(
 
     return Response.json(sentence);
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
+    if (isPrismaErrorCode(error, "P2025")) {
       return Response.json(
         { message: "指定された暗唱文が見つかりません。" },
         { status: 404 },
