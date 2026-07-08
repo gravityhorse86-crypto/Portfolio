@@ -9,9 +9,15 @@ const signupSchema = z.object({
   id: z
     .string()
     .trim()
-    .min(1, "IDは必須です")
-    .regex(/^[a-zA-Z0-9_]+$/, "IDは英数字と_だけで入力してください"),
-  username: z.string().trim().min(1, "ユーザー名は必須です"),
+    .min(8, "IDは8文字以上で入力してください")
+    .regex(/^[a-zA-Z0-9]+$/, "IDは英数字だけで入力してください")
+    .regex(/[a-zA-Z]/, "IDには英字を含めてください")
+    .regex(/[0-9]/, "IDには数字を含めてください"),
+  username: z
+    .string()
+    .trim()
+    .min(1, "ユーザー名は必須です")
+    .max(15, "ユーザー名は15文字以内で入力してください"),
   email: z
     .string()
     .trim()
@@ -94,13 +100,13 @@ export default function Signup() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
-            <label className="mb-1.5 block text-sm font-semibold text-slate-700 ml-1">
+            <label className="mb-1.5 ml-1 block text-sm font-medium text-slate-700">
               ID
             </label>
             <input
               type="text"
               name="id"
-              placeholder="英数字で入力してください"
+              placeholder="英字と数字を含む8文字以上"
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100 transition-all"
             />
             {errors.id?.[0] && (

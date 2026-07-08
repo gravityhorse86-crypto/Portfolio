@@ -12,9 +12,15 @@ const signupSchema = z.object({
   id: z
     .string()
     .trim()
-    .min(1, "IDは必須です")
-    .regex(/^[a-zA-Z0-9_]+$/, "IDは英数字と_だけで入力してください"),
-  username: z.string().trim().min(1, "ユーザー名は必須です"),
+    .min(8, "IDは8文字以上で入力してください")
+    .regex(/^[a-zA-Z0-9]+$/, "IDは英数字だけで入力してください")
+    .regex(/[a-zA-Z]/, "IDには英字を含めてください")
+    .regex(/[0-9]/, "IDには数字を含めてください"),
+  username: z
+    .string()
+    .trim()
+    .min(1, "ユーザー名は必須です")
+    .max(15, "ユーザー名は15文字以内で入力してください"),
   email: z
     .string()
     .trim()
@@ -47,6 +53,13 @@ export async function POST(request: Request) {
   const { id, username, email, password } = result.data;
 
   try {
+    if (!process.env.DATABASE_URL) {
+      return Response.json(
+        { message: "サーバーのデータベース接続設定が不足しています。" },
+        { status: 500 },
+      );
+    }
+
     const existingIdUser = await prisma.user.findUnique({
       where: { id },
       select: { id: true },
