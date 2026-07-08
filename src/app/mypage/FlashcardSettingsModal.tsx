@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type FlashcardSettingsModalProps = {
@@ -25,7 +25,6 @@ const sortOptions: { label: string; value: SortOrder }[] = [
 export function FlashcardSettingsModal({
   onClose,
 }: FlashcardSettingsModalProps) {
-  const router = useRouter();
   const [status, setStatus] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortOrder>("newest");
   const [isStarting, setIsStarting] = useState(false);
@@ -48,7 +47,7 @@ export function FlashcardSettingsModal({
     };
   }, [onClose]);
 
-  function startFlashcard() {
+  function getFlashcardHref() {
     const params = new URLSearchParams();
 
     if (status !== "all") {
@@ -57,8 +56,7 @@ export function FlashcardSettingsModal({
 
     params.set("sort", sort);
 
-    setIsStarting(true);
-    router.push(`/flashcard?${params.toString()}`);
+    return `/flashcard?${params.toString()}`;
   }
 
   return (
@@ -92,7 +90,7 @@ export function FlashcardSettingsModal({
                 onClick={() => setStatus(option.value)}
                 className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
                   status === option.value
-                    ? "border-indigo-600 bg-indigo-600 text-white"
+                    ? "border-sky-500 bg-sky-500 text-white"
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
                 }`}
               >
@@ -131,14 +129,14 @@ export function FlashcardSettingsModal({
           >
             キャンセル
           </button>
-          <button
-            type="button"
-            onClick={startFlashcard}
-            disabled={isStarting}
-            className="rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-indigo-400"
+          <Link
+            href={getFlashcardHref()}
+            onClick={() => setIsStarting(true)}
+            className="rounded-lg bg-sky-500 px-4 py-3 text-center font-semibold text-white transition-colors hover:bg-sky-600 aria-disabled:pointer-events-none aria-disabled:bg-sky-300"
+            aria-disabled={isStarting}
           >
             {isStarting ? "読み込み中..." : "スタート"}
-          </button>
+          </Link>
         </div>
       </div>
     </div>

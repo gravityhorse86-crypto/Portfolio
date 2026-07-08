@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
-import type { NextResponse } from "next/server";
+import type { NextRequest, NextResponse } from "next/server";
 
 export const sessionCookieName = "pf_session";
 const sessionMaxAgeSeconds = 60 * 60 * 24 * 30;
@@ -70,6 +70,16 @@ export function verifySessionToken(token: string) {
   }
 }
 
+export function getSessionUserIdFromRequest(request: NextRequest) {
+  const token = request.cookies.get(sessionCookieName)?.value;
+
+  if (!token) {
+    return null;
+  }
+
+  return verifySessionToken(token)?.userId ?? null;
+}
+
 export function setSessionCookie(response: NextResponse, userId: string) {
   response.cookies.set({
     name: sessionCookieName,
@@ -79,5 +89,17 @@ export function setSessionCookie(response: NextResponse, userId: string) {
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: sessionMaxAgeSeconds,
+  });
+}
+
+export function clearSessionCookie(response: NextResponse) {
+  response.cookies.set({
+    name: sessionCookieName,
+    value: "",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
   });
 }

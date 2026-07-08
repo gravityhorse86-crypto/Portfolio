@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { NextRequest } from "next/server";
+
+import { getSessionUserIdFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -22,7 +25,27 @@ const requestSchema = z.object({
   sentences: z.array(sentenceSchema).min(1),
 });
 
-export async function POST(request: Request) {
+async function ensureSentenceStatuses() {
+  await prisma.sentenceStatus.createMany({
+    data: [
+      { id: "0", name: "覚えた" },
+      { id: "1", name: "怪しい" },
+      { id: "2", name: "覚えてない" },
+    ],
+    skipDuplicates: true,
+  });
+}
+
+export async function POST(request: NextRequest) {
+  const userId = getSessionUserIdFromRequest(request);
+
+  if (!userId) {
+    return Response.json(
+      { message: "ログインしてください。" },
+      { status: 401 },
+    );
+  }
+
   let body: unknown;
 
   try {
@@ -38,12 +61,17 @@ export async function POST(request: Request) {
 
   if (!result.success) {
     return Response.json(
-      { fieldErrors: result.error.flatten() },
+      {
+        message: "入力内容を確認してください。",
+        fieldErrors: result.error.flatten(),
+      },
       { status: 400 },
     );
   }
 
   try {
+    await ensureSentenceStatuses();
+
     const sentences = await prisma.sentence.createMany({
       data: result.data.sentences.map((sentence) => ({
         content: sentence.content,

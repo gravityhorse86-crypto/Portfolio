@@ -1,6 +1,9 @@
 import { z } from "zod";
+import { NextRequest } from "next/server";
+
 import { prisma } from "@/lib/prisma";
 import { isPrismaErrorCode } from "@/lib/prisma-error";
+import { getSessionUserIdFromRequest } from "@/lib/session";
 
 export const runtime = "nodejs";
 
@@ -9,9 +12,18 @@ const updateStatusSchema = z.object({
 });
 
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const userId = getSessionUserIdFromRequest(request);
+
+  if (!userId) {
+    return Response.json(
+      { message: "ログインしてください。" },
+      { status: 401 },
+    );
+  }
+
   const { id } = await params;
   let body: unknown;
 

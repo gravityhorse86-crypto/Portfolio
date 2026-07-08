@@ -8,7 +8,7 @@ import { setSessionCookie } from "@/lib/session";
 export const runtime = "nodejs";
 
 const signinSchema = z.object({
-  id: z.string().min(1, "IDは必須です"),
+  id: z.string().trim().min(1, "IDは必須です"),
   password: z.string().min(1, "パスワードは必須です"),
 });
 

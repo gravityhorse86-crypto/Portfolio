@@ -11,10 +11,15 @@ export const runtime = "nodejs";
 const signupSchema = z.object({
   id: z
     .string()
+    .trim()
     .min(1, "IDは必須です")
     .regex(/^[a-zA-Z0-9_]+$/, "IDは英数字と_だけで入力してください"),
-  username: z.string().min(1, "ユーザー名は必須です"),
-  email: z.string().email("メールアドレスの形式が正しくありません"),
+  username: z.string().trim().min(1, "ユーザー名は必須です"),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email("メールアドレスの形式が正しくありません"),
   password: z.string().min(8, "パスワードは8文字以上でなければなりません"),
 });
 

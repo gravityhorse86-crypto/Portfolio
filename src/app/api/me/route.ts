@@ -4,14 +4,18 @@ import { z } from "zod";
 import { createPasswordHash, isPasswordCorrect } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { isPrismaErrorCode } from "@/lib/prisma-error";
-import { sessionCookieName, verifySessionToken } from "@/lib/session";
+import { getSessionUserIdFromRequest } from "@/lib/session";
 
 export const runtime = "nodejs";
 
 const updateMyInfoSchema = z
   .object({
     username: z.string().trim().min(1, "ユーザー名は必須です"),
-    email: z.string().trim().email("メールアドレスの形式が正しくありません"),
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .email("メールアドレスの形式が正しくありません"),
     currentPassword: z.string().optional().default(""),
     newPassword: z.string().optional().default(""),
   })
@@ -35,18 +39,8 @@ const updateMyInfoSchema = z
     }
   });
 
-function getSessionUserId(request: NextRequest) {
-  const token = request.cookies.get(sessionCookieName)?.value;
-
-  if (!token) {
-    return null;
-  }
-
-  return verifySessionToken(token)?.userId ?? null;
-}
-
 export async function GET(request: NextRequest) {
-  const userId = getSessionUserId(request);
+  const userId = getSessionUserIdFromRequest(request);
 
   if (!userId) {
     return NextResponse.json(
@@ -75,7 +69,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const userId = getSessionUserId(request);
+  const userId = getSessionUserIdFromRequest(request);
 
   if (!userId) {
     return NextResponse.json(

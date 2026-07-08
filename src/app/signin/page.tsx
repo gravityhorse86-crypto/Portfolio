@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useState } from "react";
 
 const signinSchema = z.object({
-  id: z.string().min(1, "IDは必須です"),
+  id: z.string().trim().min(1, "IDは必須です"),
   password: z.string().min(1, "パスワードは必須です"),
 });
 
@@ -137,7 +137,7 @@ export default function Signin() {
     
           <Link
             href="/signup"
-            className="w-full rounded-2xl border border-sky-100 bg-sky-50 py-3 text-sm font-bold text-sky-700 hover:bg-sky-100 transition-colors"
+            className="block w-full rounded-2xl border border-sky-100 bg-sky-50 py-3 text-center text-sm font-bold text-sky-700 transition-colors hover:bg-sky-100"
           >
             新しくアカウントを作る
           </Link>

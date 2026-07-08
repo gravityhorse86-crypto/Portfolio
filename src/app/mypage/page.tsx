@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 
 import { FlashcardSettingsModal } from "./FlashcardSettingsModal";
@@ -9,6 +10,17 @@ import { CharacterStatus } from "./CharacterStatus";
 type SentenceRow = {
   content: string;
   translation: string;
+};
+
+type UserInfo = {
+  id: string;
+  username: string;
+  email: string;
+};
+
+type StudyStats = {
+  monthlyCount: number;
+  totalCount: number;
 };
 
 type SentenceRowErrors = Partial<Record<keyof SentenceRow, string>>;
@@ -29,6 +41,13 @@ const sentenceSchema = z.object({
 });
 
 export default function MyPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [stats, setStats] = useState<StudyStats>({
+    monthlyCount: 0,
+    totalCount: 0,
+  });
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [rows, setRows] = useState<SentenceRow[]>([
     { content: "", translation: "" },
   ]);
@@ -37,6 +56,51 @@ export default function MyPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isFlashcardSettingsOpen, setIsFlashcardSettingsOpen] =
     useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function checkAuth() {
+      try {
+        const response = await fetch("/api/me");
+        const data = await response.json();
+
+        if (ignore) return;
+
+        if (!response.ok) {
+          router.replace("/signin");
+          return;
+        }
+
+        setUser(data.user);
+
+        const statsResponse = await fetch("/api/characters");
+
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+
+          setStats({
+            monthlyCount: Number(statsData.monthlyCount ?? statsData.count ?? 0),
+            totalCount: Number(statsData.totalCount ?? 0),
+          });
+        }
+      } catch {
+        if (!ignore) {
+          router.replace("/signin");
+        }
+      } finally {
+        if (!ignore) {
+          setIsCheckingAuth(false);
+        }
+      }
+    }
+
+    checkAuth();
+
+    return () => {
+      ignore = true;
+    };
+  }, [router]);
 
   function addRow() {
     setRows([...rows, { content: "", translation: "" }]);
@@ -58,6 +122,11 @@ export default function MyPage() {
         rowIndex === index ? { ...error, [key]: undefined } : error,
       ),
     );
+  }
+
+  async function logout() {
+    await fetch("/api/logout", { method: "POST" }).catch(() => undefined);
+    router.replace("/signin");
   }
 
   async function saveRows() {
@@ -130,6 +199,11 @@ export default function MyPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          router.replace("/signin");
+          return;
+        }
+
         setMessage(data.message ?? "保存に失敗しました。入力内容を確認してください。");
         return;
       }
@@ -144,6 +218,14 @@ export default function MyPage() {
     }
   }
 
+  if (isCheckingAuth || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+        <p className="text-sm text-slate-500">読み込み中...</p>
+      </div>
+    );
+  }
+
   return (
     <>
     <div
@@ -155,19 +237,43 @@ export default function MyPage() {
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">マイページ</h1>
-            <p className="mt-4 text-slate-600">1ヶ月以内に暗唱した数：</p>
-            <p className="text-slate-600">これまでに暗唱した数：</p>
+            {user && (
+              <p className="mt-2 text-sm text-slate-500">
+                {user.username}さん
+              </p>
+            )}
+            <p className="mt-4 text-slate-600">
+              1ヶ月以内に暗唱した数：
+              <span className="ml-2 align-middle text-2xl font-bold text-sky-600">
+                {stats.monthlyCount}
+              </span>
+            </p>
+            <p className="text-slate-600">
+              これまでに暗唱した数：
+              <span className="ml-2 align-middle text-2xl font-bold text-emerald-600">
+                {stats.totalCount}
+              </span>
+            </p>
           </div>
 
           <CharacterStatus />
 
-          <button
-            type="button"
-            onClick={() => setIsFlashcardSettingsOpen(true)}
-            className="rounded-lg bg-indigo-600 px-5 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
-          >
-            フラッシュカードへ
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setIsFlashcardSettingsOpen(true)}
+              className="rounded-lg bg-indigo-600 px-5 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700"
+            >
+              フラッシュカードへ
+            </button>
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 font-semibold text-slate-600 shadow-sm transition-colors hover:bg-slate-100"
+            >
+              ログアウト
+            </button>
+          </div>
         </div>
 
         <div className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">

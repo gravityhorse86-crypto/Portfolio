@@ -1,12 +1,18 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
 const editMyInfoSchema = z
   .object({
     username: z.string().trim().min(1, "ユーザー名は必須です"),
-    email: z.string().trim().email("メールアドレスの形式が正しくありません"),
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .email("メールアドレスの形式が正しくありません"),
     currentPassword: z.string(),
     newPassword: z.string(),
   })
@@ -39,6 +45,7 @@ type UserInfo = {
 };
 
 export default function EditMyInfo() {
+  const router = useRouter();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -60,7 +67,7 @@ export default function EditMyInfo() {
         if (ignore) return;
 
         if (!response.ok) {
-          setMessage(data.message ?? "ユーザー情報を取得できませんでした。");
+          router.replace("/signin");
           return;
         }
 
@@ -83,7 +90,7 @@ export default function EditMyInfo() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [router]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,10 +122,15 @@ export default function EditMyInfo() {
       });
       const data = await response.json();
 
-      if (!response.ok) {
-        if (data.fieldErrors) {
-          setErrors(data.fieldErrors);
-        }
+        if (!response.ok) {
+          if (response.status === 401) {
+            router.replace("/signin");
+            return;
+          }
+
+          if (data.fieldErrors) {
+            setErrors(data.fieldErrors);
+          }
 
         setMessage(data.message ?? "ユーザー情報の更新に失敗しました。");
         return;
@@ -144,7 +156,7 @@ export default function EditMyInfo() {
           ユーザー情報編集
         </h1>
 
-        {isLoading ? (
+        {isLoading || !user ? (
           <p className="text-sm text-slate-500">読み込み中...</p>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -236,7 +248,7 @@ export default function EditMyInfo() {
 
             {message && <p className="text-sm text-slate-600">{message}</p>}
 
-            <div className="mt-4">
+            <div className="mt-4 flex flex-col gap-3 md:flex-row">
               <button
                 type="submit"
                 disabled={isSaving}
@@ -244,6 +256,12 @@ export default function EditMyInfo() {
               >
                 {isSaving ? "更新中..." : "更新する"}
               </button>
+              <Link
+                href="/mypage"
+                className="w-full rounded-xl border border-slate-200 bg-white px-10 py-3 text-center font-bold text-slate-600 shadow-sm transition-colors hover:bg-slate-100 md:w-auto"
+              >
+                マイページに戻る
+              </Link>
             </div>
           </form>
         )}

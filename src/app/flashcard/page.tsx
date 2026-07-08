@@ -1,4 +1,8 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
 import { prisma } from "@/lib/prisma";
+import { sessionCookieName, verifySessionToken } from "@/lib/session";
 
 import { FlashcardClient } from "./FlashcardClient";
 
@@ -13,6 +17,14 @@ type FlashcardPageProps = {
 };
 
 export default async function Flashcard({ searchParams }: FlashcardPageProps) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(sessionCookieName)?.value;
+  const session = token ? verifySessionToken(token) : null;
+
+  if (!session) {
+    redirect("/signin");
+  }
+
   const params = await searchParams;
   const where: { status_id?: "0" | "1" | "2" } = {};
 
