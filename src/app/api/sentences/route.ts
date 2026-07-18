@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { NextRequest } from "next/server";
 
+import { ensureDefaultFlashcardSet } from "@/lib/flashcard-sets";
 import { getSessionUserIdFromRequest } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
@@ -22,6 +23,7 @@ const sentenceSchema = z.object({
 });
 
 const requestSchema = z.object({
+  setId: z.string().uuid().optional(),
   sentences: z.array(sentenceSchema).min(1),
 });
 
@@ -34,6 +36,57 @@ async function ensureSentenceStatuses() {
     ],
     skipDuplicates: true,
   });
+}
+
+export async function GET(request: NextRequest) {
+  const userId = getSessionUserIdFromRequest(request);
+
+  if (!userId) {
+    return Response.json(
+      { message: "ログインしてください。" },
+      { status: 401 },
+    );
+  }
+
+  const setId = request.nextUrl.searchParams.get("setId");
+
+  if (setId) {
+    const set = await prisma.flashcardSet.findFirst({
+      where: {
+        id: setId,
+        user_id: userId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!set) {
+      return Response.json(
+        { message: "指定されたセットが見つかりません。" },
+        { status: 404 },
+      );
+    }
+  }
+
+  const sentences = await prisma.sentence.findMany({
+    where: {
+      user_id: userId,
+      ...(setId ? { flashcard_set_id: setId } : {}),
+    },
+    orderBy: {
+      created_at: "desc",
+    },
+    select: {
+      id: true,
+      content: true,
+      translation: true,
+      status_id: true,
+      created_at: true,
+    },
+  });
+
+  return Response.json({ sentences });
 }
 
 export async function POST(request: NextRequest) {
@@ -72,11 +125,32 @@ export async function POST(request: NextRequest) {
   try {
     await ensureSentenceStatuses();
 
+    const targetSet = result.data.setId
+      ? await prisma.flashcardSet.findFirst({
+          where: {
+            id: result.data.setId,
+            user_id: userId,
+          },
+          select: {
+            id: true,
+          },
+        })
+      : await ensureDefaultFlashcardSet(userId);
+
+    if (!targetSet) {
+      return Response.json(
+        { message: "保存先のセットが見つかりません。" },
+        { status: 404 },
+      );
+    }
+
     const sentences = await prisma.sentence.createMany({
       data: result.data.sentences.map((sentence) => ({
         content: sentence.content,
         translation: sentence.translation,
         status_id: "2",
+        user_id: userId,
+        flashcard_set_id: targetSet.id,
       })),
     });
 

@@ -10,9 +10,7 @@ const signupSchema = z.object({
     .string()
     .trim()
     .min(8, "IDは8文字以上で入力してください")
-    .regex(/^[a-zA-Z0-9]+$/, "IDは英数字だけで入力してください")
-    .regex(/[a-zA-Z]/, "IDには英字を含めてください")
-    .regex(/[0-9]/, "IDには数字を含めてください"),
+    .regex(/^[a-zA-Z0-9]+$/, "IDは英数字だけで入力してください"),
   username: z
     .string()
     .trim()
@@ -106,7 +104,7 @@ export default function Signup() {
             <input
               type="text"
               name="id"
-              placeholder="英字と数字を含む8文字以上"
+              placeholder="英数字8文字以上"
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100 transition-all"
             />
             {errors.id?.[0] && (

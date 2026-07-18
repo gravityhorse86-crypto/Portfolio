@@ -38,15 +38,18 @@ export function CharacterStatus() {
   if (count === null) return null;
 
   return (
-    <div className="flex items-center gap-4 md:flex-col md:gap-2">
-      <Image
-        src={getCharacterSrc(count)}
-        alt="キャラクター"
-        width={180}
-        height={180}
-        className="h-40 w-40 md:h-44 md:w-44"
-      />
-      <p className="rounded-lg bg-white px-4 py-2 text-base font-bold text-slate-700 shadow-sm ring-1 ring-slate-200">
+    <div className="flex select-none items-center gap-4 md:flex-col md:gap-2">
+      <div className="flex h-36 w-56 items-center justify-center md:h-40 md:w-64">
+        <Image
+          src={getCharacterSrc(count)}
+          alt="キャラクター"
+          width={260}
+          height={142}
+          className="h-auto max-h-full w-full object-contain"
+          priority
+        />
+      </div>
+      <p className="cursor-default rounded-lg bg-white/95 px-4 py-2 text-base font-bold text-slate-700 shadow-sm ring-1 ring-sky-100">
         レベル：{getCharacterLevel(count)}
       </p>
     </div>

@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { createPasswordHash } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
-import { isPrismaErrorCode } from "@/lib/prisma-error";
+import { getPrismaErrorCode, isPrismaErrorCode } from "@/lib/prisma-error";
 import { setSessionCookie } from "@/lib/session";
 
 export const runtime = "nodejs";
@@ -13,9 +13,7 @@ const signupSchema = z.object({
     .string()
     .trim()
     .min(8, "IDは8文字以上で入力してください")
-    .regex(/^[a-zA-Z0-9]+$/, "IDは英数字だけで入力してください")
-    .regex(/[a-zA-Z]/, "IDには英字を含めてください")
-    .regex(/[0-9]/, "IDには数字を含めてください"),
+    .regex(/^[a-zA-Z0-9]+$/, "IDは英数字だけで入力してください"),
   username: z
     .string()
     .trim()
@@ -108,6 +106,48 @@ export async function POST(request: Request) {
       return Response.json(
         { message: "このIDまたはメールアドレスはすでに使われています" },
         { status: 409 },
+      );
+    }
+
+    const prismaErrorCode = getPrismaErrorCode(error);
+
+    if (prismaErrorCode === "P1000") {
+      return Response.json(
+        {
+          message:
+            "データベース認証に失敗しました。VercelのDATABASE_URLを確認してください。",
+        },
+        { status: 500 },
+      );
+    }
+
+    if (prismaErrorCode === "P1001") {
+      return Response.json(
+        {
+          message:
+            "データベースに接続できません。VercelのDATABASE_URLはSupabaseのConnection Pooler用URLを設定してください。",
+        },
+        { status: 500 },
+      );
+    }
+
+    if (prismaErrorCode === "P1013") {
+      return Response.json(
+        {
+          message:
+            "データベースURLの形式が正しくありません。VercelのDATABASE_URLに引用符を含めず設定してください。",
+        },
+        { status: 500 },
+      );
+    }
+
+    if (prismaErrorCode === "P2021" || prismaErrorCode === "P2022") {
+      return Response.json(
+        {
+          message:
+            "データベースのテーブルまたはカラムが不足しています。Prisma migrationの適用状況を確認してください。",
+        },
+        { status: 500 },
       );
     }
 

@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
   const [monthlyCount, totalCount] = await Promise.all([
     prisma.sentence.count({
       where: {
+        user_id: userId,
         status_id: "0",
         statusUpdated_at: {
           gte: oneMonthAgo,
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
     }),
     prisma.sentence.count({
       where: {
+        user_id: userId,
         status_id: "0",
       },
     }),

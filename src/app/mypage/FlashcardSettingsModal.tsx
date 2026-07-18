@@ -7,6 +7,12 @@ type FlashcardSettingsModalProps = {
   onClose: () => void;
 };
 
+type FlashcardSetOption = {
+  id: string;
+  name: string;
+  sentenceCount: number;
+};
+
 type StatusFilter = "all" | "2" | "1" | "0";
 type SortOrder = "newest" | "oldest";
 
@@ -25,9 +31,13 @@ const sortOptions: { label: string; value: SortOrder }[] = [
 export function FlashcardSettingsModal({
   onClose,
 }: FlashcardSettingsModalProps) {
+  const [sets, setSets] = useState<FlashcardSetOption[]>([]);
+  const [selectedSetId, setSelectedSetId] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortOrder>("newest");
+  const [isLoadingSets, setIsLoadingSets] = useState(true);
   const [isStarting, setIsStarting] = useState(false);
+  const [setMessage, setSetMessage] = useState("");
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
@@ -47,8 +57,48 @@ export function FlashcardSettingsModal({
     };
   }, [onClose]);
 
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadSets() {
+      try {
+        const response = await fetch("/api/flashcard-sets");
+        const data = await response.json();
+
+        if (ignore) return;
+
+        if (!response.ok) {
+          setSetMessage(data.message ?? "セットの読み込みに失敗しました。");
+          return;
+        }
+
+        const nextSets = Array.isArray(data.sets) ? data.sets : [];
+        setSets(nextSets);
+        setSelectedSetId((current) => current || nextSets[0]?.id || "");
+      } catch {
+        if (!ignore) {
+          setSetMessage("セットの読み込みに失敗しました。");
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoadingSets(false);
+        }
+      }
+    }
+
+    loadSets();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   function getFlashcardHref() {
     const params = new URLSearchParams();
+
+    if (selectedSetId) {
+      params.set("setId", selectedSetId);
+    }
 
     if (status !== "all") {
       params.set("status", status);
@@ -58,6 +108,9 @@ export function FlashcardSettingsModal({
 
     return `/flashcard?${params.toString()}`;
   }
+
+  const selectedSet = sets.find((set) => set.id === selectedSetId);
+  const canStart = !isLoadingSets && Boolean(selectedSetId) && !isStarting;
 
   return (
     <div
@@ -77,6 +130,39 @@ export function FlashcardSettingsModal({
         >
           フラッシュカード設定
         </h2>
+
+        <div className="mt-6">
+          <label
+            htmlFor="flashcard-set"
+            className="mb-2 block text-sm font-semibold text-slate-700"
+          >
+            セット
+          </label>
+          <select
+            id="flashcard-set"
+            value={selectedSetId}
+            onChange={(event) => setSelectedSetId(event.target.value)}
+            disabled={isLoadingSets}
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors focus:border-sky-500 focus:outline-none focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+          >
+            <option value="" disabled>
+              {isLoadingSets ? "読み込み中..." : "セットがありません"}
+            </option>
+            {sets.map((set) => (
+              <option key={set.id} value={set.id}>
+                {set.name}（{set.sentenceCount}件）
+              </option>
+            ))}
+          </select>
+          {selectedSet && (
+            <p className="mt-2 text-xs text-slate-500">
+              このセットのカード数：{selectedSet.sentenceCount}件
+            </p>
+          )}
+          {setMessage && (
+            <p className="mt-2 text-sm text-red-500">{setMessage}</p>
+          )}
+        </div>
 
         <div className="mt-6">
           <p className="mb-2 text-sm font-semibold text-slate-700">
@@ -131,9 +217,16 @@ export function FlashcardSettingsModal({
           </button>
           <Link
             href={getFlashcardHref()}
-            onClick={() => setIsStarting(true)}
+            onClick={(event) => {
+              if (!canStart) {
+                event.preventDefault();
+                return;
+              }
+
+              setIsStarting(true);
+            }}
             className="rounded-lg bg-sky-500 px-4 py-3 text-center font-semibold text-white transition-colors hover:bg-sky-600 aria-disabled:pointer-events-none aria-disabled:bg-sky-300"
-            aria-disabled={isStarting}
+            aria-disabled={!canStart}
           >
             {isStarting ? "読み込み中..." : "スタート"}
           </Link>

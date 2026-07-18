@@ -21,6 +21,8 @@ model User {
   encrypted_password String
   created_at         DateTime @default(now())
   updated_at         DateTime @updatedAt
+  sentences          Sentence[]
+  flashcardSets      FlashcardSet[]
 }
 
 // 2. 暗唱文
@@ -35,10 +37,30 @@ model Sentence {
   status_id      String      @default("2")   // 習得状況　覚えてない=2,怪しい=1,覚えた=0
   status          SentenceStatus @relation(fields: [status_id], references: [id])
   statusUpdated_at DateTime?  // ステータスが変更したときの時刻
+  user_id          String?
+  flashcard_set_id String?
+  user             User?         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  flashcardSet     FlashcardSet? @relation(fields: [flashcard_set_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([flashcard_set_id])
 }
 
 model SentenceStatus {
   id        String     @id
   name      String
   sentences Sentence[]
+}
+
+model FlashcardSet {
+  id         String     @id @default(uuid())
+  name       String
+  user_id    String
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  user       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  sentences  Sentence[]
+
+  @@unique([user_id, name])
+  @@index([user_id])
 }
