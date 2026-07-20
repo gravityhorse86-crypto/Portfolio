@@ -1,14 +1,21 @@
 import type { useSentences } from "@/hooks/useSentences";
 
+import { EditableSetName } from "./EditableSetName";
 import { SavedSentenceItem } from "./SavedSentenceItem";
 
 type SavedSentenceListProps = {
+  selectedSetId: string;
   selectedSetName?: string;
+  onRenameSet: (name: string) => void;
+  onRequestDeleteSet: () => void;
   sentences: ReturnType<typeof useSentences>;
 };
 
 export function SavedSentenceList({
+  selectedSetId,
   selectedSetName,
+  onRenameSet,
+  onRequestDeleteSet,
   sentences,
 }: SavedSentenceListProps) {
   const {
@@ -34,13 +41,29 @@ export function SavedSentenceList({
 
   return (
     <section className="border-t border-slate-100 pt-5 md:border-l md:border-t-0 md:pl-6 md:pt-0">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="min-w-0 truncate text-base font-bold text-slate-800">
-          {selectedSetName ?? "選択中セット"}
-        </h2>
+      <div className="mb-4 flex items-center gap-3">
+        {selectedSetId ? (
+          <EditableSetName
+            name={selectedSetName ?? "選択中セット"}
+            onRename={onRenameSet}
+          />
+        ) : (
+          <h2 className="min-w-0 flex-1 truncate text-base font-bold text-slate-800">
+            選択中セット
+          </h2>
+        )}
         <p className="shrink-0 text-sm font-semibold text-sky-600">
           {savedSentences.length}件
         </p>
+        {selectedSetId && (
+          <button
+            type="button"
+            onClick={onRequestDeleteSet}
+            className="shrink-0 rounded-lg border border-red-100 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50"
+          >
+            セット削除
+          </button>
+        )}
       </div>
 
       {sentenceListMessage && (

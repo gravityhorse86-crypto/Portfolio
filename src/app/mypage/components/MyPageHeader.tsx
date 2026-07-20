@@ -26,18 +26,20 @@ export function MyPageHeader({ username, stats, onLogout }: MyPageHeaderProps) {
         >
           アカウント
         </Link>
-        <p className="mt-4 cursor-default select-none text-sky-50">
-          1ヶ月以内に暗唱した数：
-          <span className="ml-2 align-middle text-2xl font-bold text-white">
-            {stats.monthlyCount}
-          </span>
-        </p>
-        <p className="cursor-default select-none text-sky-50">
-          これまでに暗唱した数：
-          <span className="ml-2 align-middle text-2xl font-bold text-emerald-200">
-            {stats.totalCount}
-          </span>
-        </p>
+        <div className="mt-4 space-y-1">
+          <p className="flex cursor-default select-none items-baseline text-sky-50">
+            1ヶ月以内に暗唱した数：
+            <span className="ml-1 text-xl font-bold leading-none text-white">
+              {stats.monthlyCount}
+            </span>
+          </p>
+          <p className="flex cursor-default select-none items-baseline text-sky-50">
+            これまでに暗唱した数：
+            <span className="ml-1 text-xl font-bold leading-none text-white">
+              {stats.totalCount}
+            </span>
+          </p>
+        </div>
       </div>
 
       <CharacterStatus />

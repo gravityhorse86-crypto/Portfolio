@@ -73,6 +73,89 @@ export function useFlashcardSets(enabled: boolean) {
     loadSets();
   }, [enabled, loadSets]);
 
+  const renameSet = useCallback(
+    async (setId: string, name: string) => {
+      const trimmedName = name.trim();
+      const target = sets.find((set) => set.id === setId);
+
+      // 変更なし・空文字なら何もしない
+      if (!trimmedName || (target && target.name === trimmedName)) {
+        return;
+      }
+
+      setMessage("");
+
+      // 先に楽観的更新（ブラー保存の体感を良くする）
+      setSets((current) =>
+        current.map((set) =>
+          set.id === setId ? { ...set, name: trimmedName } : set,
+        ),
+      );
+
+      try {
+        const response = await fetch(`/api/flashcard-sets/${setId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: trimmedName }),
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            router.replace("/signin");
+            return;
+          }
+
+          setMessage(
+            data.fieldErrors?.name?.[0] ??
+              data.message ??
+              "セット名の変更に失敗しました。",
+          );
+          // 失敗したのでサーバーの状態に戻す
+          await loadSets(setId);
+          return;
+        }
+
+        setMessage("セット名を変更しました。");
+      } catch {
+        setMessage("通信に失敗しました。時間をおいてもう一度試してください。");
+        await loadSets(setId);
+      }
+    },
+    [loadSets, router, sets],
+  );
+
+  const deleteSet = useCallback(
+    async (setId: string) => {
+      setMessage("");
+
+      try {
+        const response = await fetch(`/api/flashcard-sets/${setId}`, {
+          method: "DELETE",
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            router.replace("/signin");
+            return;
+          }
+
+          setMessage(data.message ?? "セットの削除に失敗しました。");
+          return;
+        }
+
+        // 削除したセットが選択中なら選択を外す（loadSetsが先頭に付け替える）
+        setSelectedSetId((current) => (current === setId ? "" : current));
+        await loadSets();
+        setMessage("セットを削除しました。");
+      } catch {
+        setMessage("通信に失敗しました。時間をおいてもう一度試してください。");
+      }
+    },
+    [loadSets, router],
+  );
+
   const createSet = useCallback(async () => {
     setMessage("");
     setSetErrors({});
@@ -135,6 +218,8 @@ export function useFlashcardSets(enabled: boolean) {
     message,
     isCreatingSet,
     createSet,
+    renameSet,
+    deleteSet,
     loadSets,
   };
 }

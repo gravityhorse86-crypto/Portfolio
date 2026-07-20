@@ -11,6 +11,7 @@ import { MyPageHeader } from "./components/MyPageHeader";
 import { FlashcardSetControls } from "./components/FlashcardSetControls";
 import { SentenceComposer } from "./components/SentenceComposer";
 import { SavedSentenceList } from "./components/SavedSentenceList";
+import { ConfirmModal } from "./components/ConfirmModal";
 
 export default function MyPage() {
   const { user, stats, isCheckingAuth, logout } = useAuthGuard();
@@ -20,10 +21,11 @@ export default function MyPage() {
     onSentencesChanged: flashcardSets.loadSets,
   });
   const [isFlashcardSettingsOpen, setIsFlashcardSettingsOpen] = useState(false);
+  const [isDeleteSetModalOpen, setIsDeleteSetModalOpen] = useState(false);
 
   if (isCheckingAuth || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-sky-600 p-6">
+      <div className="flex min-h-screen items-center justify-center bg-[#1f7aa9] p-6">
         <p className="cursor-default select-none text-sm text-white/80">
           読み込み中...
         </p>
@@ -34,9 +36,11 @@ export default function MyPage() {
   return (
     <>
       <div
-        className="min-h-screen bg-sky-600 p-4 md:p-8"
-        aria-hidden={isFlashcardSettingsOpen}
-        inert={isFlashcardSettingsOpen ? true : undefined}
+        className="min-h-screen bg-[#1f7aa9] p-4 md:p-8"
+        aria-hidden={isFlashcardSettingsOpen || isDeleteSetModalOpen}
+        inert={
+          isFlashcardSettingsOpen || isDeleteSetModalOpen ? true : undefined
+        }
       >
         <div className="mx-auto w-full max-w-md md:max-w-5xl">
           <MyPageHeader
@@ -85,7 +89,12 @@ export default function MyPage() {
               />
 
               <SavedSentenceList
+                selectedSetId={flashcardSets.selectedSetId}
                 selectedSetName={flashcardSets.selectedSet?.name}
+                onRenameSet={(name) =>
+                  flashcardSets.renameSet(flashcardSets.selectedSetId, name)
+                }
+                onRequestDeleteSet={() => setIsDeleteSetModalOpen(true)}
                 sentences={sentences}
               />
             </div>
@@ -96,6 +105,23 @@ export default function MyPage() {
       {isFlashcardSettingsOpen && (
         <FlashcardSettingsModal
           onClose={() => setIsFlashcardSettingsOpen(false)}
+        />
+      )}
+
+      {isDeleteSetModalOpen && (
+        <ConfirmModal
+          message="セットを削除すると、登録された文章も削除されますがよろしいですか？"
+          confirmLabel="OK"
+          cancelLabel="キャンセル"
+          onCancel={() => setIsDeleteSetModalOpen(false)}
+          onConfirm={() => {
+            const targetSetId = flashcardSets.selectedSetId;
+            setIsDeleteSetModalOpen(false);
+
+            if (targetSetId) {
+              flashcardSets.deleteSet(targetSetId);
+            }
+          }}
         />
       )}
     </>

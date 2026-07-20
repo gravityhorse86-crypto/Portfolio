@@ -19,6 +19,14 @@ function getCharacterLevel(count: number): number {
   return 1;
 }
 
+const levelTitles: Record<number, string> = {
+  1: "落ち武者",
+  2: "堅牢な戦士",
+  3: "地方の貴族",
+  4: "王族",
+  5: "神",
+};
+
 export function CharacterStatus() {
   const [count, setCount] = useState<number | null>(null);
 
@@ -37,8 +45,13 @@ export function CharacterStatus() {
 
   if (count === null) return null;
 
+  const level = getCharacterLevel(count);
+
   return (
     <div className="flex select-none items-center gap-4 md:flex-col md:gap-2">
+      <p className="cursor-default rounded-lg bg-white/95 px-4 py-2 text-base font-bold text-slate-700 shadow-sm ring-1 ring-sky-100">
+        レベル{level}：{levelTitles[level]}
+      </p>
       <div className="flex h-36 w-56 items-center justify-center md:h-40 md:w-64">
         <Image
           src={getCharacterSrc(count)}
@@ -49,9 +62,6 @@ export function CharacterStatus() {
           priority
         />
       </div>
-      <p className="cursor-default rounded-lg bg-white/95 px-4 py-2 text-base font-bold text-slate-700 shadow-sm ring-1 ring-sky-100">
-        レベル：{getCharacterLevel(count)}
-      </p>
     </div>
   );
 }
