@@ -25,7 +25,7 @@ export default function MyPage() {
 
   if (isCheckingAuth || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#1f7aa9] p-6">
+      <div className="flex min-h-screen items-center justify-center bg-sky-400 p-6">
         <p className="cursor-default select-none text-sm text-white/80">
           読み込み中...
         </p>
@@ -36,7 +36,7 @@ export default function MyPage() {
   return (
     <>
       <div
-        className="min-h-screen bg-[#1f7aa9] p-4 md:p-8"
+        className="min-h-screen bg-sky-400 p-4 md:p-8"
         aria-hidden={isFlashcardSettingsOpen || isDeleteSetModalOpen}
         inert={
           isFlashcardSettingsOpen || isDeleteSetModalOpen ? true : undefined
