@@ -48,7 +48,7 @@ export function MyPageHeader({ username, stats, onLogout }: MyPageHeaderProps) {
         <button
           type="button"
           onClick={onLogout}
-          className="rounded-lg bg-sky-800 px-5 py-2.5 font-semibold text-white shadow-md transition-colors hover:bg-sky-900"
+          className="rounded-lg bg-sky-600 px-5 py-2.5 font-semibold text-white shadow-md transition-colors hover:bg-sky-700"
         >
           ログアウト
         </button>
