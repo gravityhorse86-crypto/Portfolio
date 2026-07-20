@@ -14,10 +14,10 @@ export function MyPageHeader({ username, stats, onLogout }: MyPageHeaderProps) {
   return (
     <div className="mb-6 flex flex-col gap-4 md:grid md:grid-cols-[1fr_auto_1fr] md:items-start">
       <div>
-        <h1 className="cursor-default select-none text-2xl font-bold text-white">
+        <h1 className="cursor-default select-none text-2xl font-bold text-sky-900">
           マイページ
         </h1>
-        <p className="mt-2 cursor-default select-none text-sm text-sky-100">
+        <p className="mt-2 cursor-default select-none text-sm text-sky-800">
           {username}さん
         </p>
         <Link
@@ -27,15 +27,15 @@ export function MyPageHeader({ username, stats, onLogout }: MyPageHeaderProps) {
           アカウント
         </Link>
         <div className="mt-4 space-y-1">
-          <p className="flex cursor-default select-none items-baseline text-sky-50">
+          <p className="flex cursor-default select-none items-baseline text-sky-800">
             1ヶ月以内に暗唱した数：
-            <span className="ml-1 text-xl font-bold leading-none text-white">
+            <span className="ml-1 text-xl font-bold leading-none text-sky-900">
               {stats.monthlyCount}
             </span>
           </p>
-          <p className="flex cursor-default select-none items-baseline text-sky-50">
+          <p className="flex cursor-default select-none items-baseline text-sky-800">
             これまでに暗唱した数：
-            <span className="ml-1 text-xl font-bold leading-none text-white">
+            <span className="ml-1 text-xl font-bold leading-none text-sky-900">
               {stats.totalCount}
             </span>
           </p>
@@ -48,7 +48,7 @@ export function MyPageHeader({ username, stats, onLogout }: MyPageHeaderProps) {
         <button
           type="button"
           onClick={onLogout}
-          className="rounded-lg border border-white/40 bg-sky-500 px-5 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-sky-400"
+          className="rounded-lg bg-sky-800 px-5 py-2.5 font-semibold text-white shadow-md transition-colors hover:bg-sky-900"
         >
           ログアウト
         </button>
