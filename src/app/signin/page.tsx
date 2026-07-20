@@ -59,7 +59,6 @@ export default function Signin() {
         return;
       }
 
-      setMessage(`${data.user?.username ?? "ユーザー"}さん、ログイン成功です`);
       router.push("/mypage");
     } catch {
       setMessage("通信に失敗しました。時間をおいてもう一度お試しください。");
