@@ -7,6 +7,8 @@
 本アプリケーションは、LLMによって文章をワンクリックでフォーマル化、インフォーマル化するなどの機能を備え、従来の紙ベースのフラッシュカードよりも効率的な学習が可能です。
 
 ## URL
+https://portfolio-r8j7kwo50-gravityhorse86-2226s-projects.vercel.app/signin
+
 
 ## デモアカウント
 - ID：
