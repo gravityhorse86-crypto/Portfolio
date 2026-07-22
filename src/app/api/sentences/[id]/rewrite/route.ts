@@ -83,7 +83,10 @@ async function rewriteWithGemini(content: string, tone: "casual" | "formal") {
         ],
         generationConfig: {
           temperature: 0.7,
-          maxOutputTokens: 160,
+          // gemini-flash-latest は思考型モデルで、思考に数百〜千トークン以上
+          // 消費する。上限が小さいと出力が途中で切れて（MAX_TOKENS）
+          // 文章の一部しか返らないため、全文が収まるよう十分な余裕を確保する。
+          maxOutputTokens: 4096,
         },
       }),
     },
