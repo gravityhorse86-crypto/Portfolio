@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type SentenceCard = {
   id: string;
@@ -34,41 +35,30 @@ const statusButtons: { label: string; value: StatusValue; className: string }[] 
   ];
 
 export function FlashcardClient({ sentences }: FlashcardClientProps) {
+  const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [updatingStatus, setUpdatingStatus] = useState<StatusValue | null>(null);
-  const [statusMessage, setStatusMessage] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const currentSentence = sentences[currentIndex];
+  const isFinished = sentences.length > 0 && currentIndex >= sentences.length;
 
   const flipCard = useCallback(() => {
     if (!currentSentence) return;
     setIsFlipped((current) => !current);
   }, [currentSentence]);
 
-  const moveCard = useCallback(
-    (direction: "prev" | "next") => {
-      if (sentences.length === 0) return;
-
-      setIsFlipped(false);
-      setStatusMessage("");
-      setCurrentIndex((current) => {
-        if (direction === "prev") {
-          return current === 0 ? sentences.length - 1 : current - 1;
-        }
-
-        return current === sentences.length - 1 ? 0 : current + 1;
-      });
-    },
-    [sentences.length],
-  );
+  const goToMypage = useCallback(() => {
+    router.push("/mypage");
+  }, [router]);
 
   const updateStatus = useCallback(
     async (statusValue: StatusValue) => {
-      if (!currentSentence || updatingStatus) return;
+      if (!currentSentence || isUpdating) return;
 
-      setUpdatingStatus(statusValue);
-      setStatusMessage("");
+      setIsUpdating(true);
+      setErrorMessage("");
 
       try {
         const response = await fetch(`/api/sentences/${currentSentence.id}`, {
@@ -80,18 +70,20 @@ export function FlashcardClient({ sentences }: FlashcardClientProps) {
         });
 
         if (!response.ok) {
-          setStatusMessage("ステータスの更新に失敗しました。");
+          setErrorMessage("ステータスの更新に失敗しました。");
           return;
         }
 
-        setStatusMessage("ステータスを更新しました。");
+        // Supabaseへの登録が成功した瞬間に次のカードへ進む（戻れない）
+        setIsFlipped(false);
+        setCurrentIndex((current) => current + 1);
       } catch {
-        setStatusMessage("通信に失敗しました。");
+        setErrorMessage("通信に失敗しました。");
       } finally {
-        setUpdatingStatus(null);
+        setIsUpdating(false);
       }
     },
-    [currentSentence, updatingStatus],
+    [currentSentence, isUpdating],
   );
 
   useEffect(() => {
@@ -100,14 +92,6 @@ export function FlashcardClient({ sentences }: FlashcardClientProps) {
         event.preventDefault();
         flipCard();
       }
-
-      if (event.code === "ArrowLeft") {
-        moveCard("prev");
-      }
-
-      if (event.code === "ArrowRight") {
-        moveCard("next");
-      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -115,9 +99,9 @@ export function FlashcardClient({ sentences }: FlashcardClientProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [flipCard, moveCard]);
+  }, [flipCard]);
 
-  if (!currentSentence) {
+  if (sentences.length === 0) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
         <div className="w-full max-w-xl rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
@@ -127,6 +111,33 @@ export function FlashcardClient({ sentences }: FlashcardClientProps) {
           <p className="mt-3 text-sm leading-6 text-slate-500">
             マイページで英文と日本語訳を登録すると、ここに表示されます。
           </p>
+          <button
+            type="button"
+            onClick={goToMypage}
+            className="mt-6 rounded-lg bg-sky-500 px-5 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-sky-600"
+          >
+            マイページへ戻る
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (isFinished) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
+        <div className="w-full max-w-xl rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <h1 className="text-xl font-bold text-slate-800">お疲れさまでした！</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-500">
+            {sentences.length}枚のカードをすべて確認しました。
+          </p>
+          <button
+            type="button"
+            onClick={goToMypage}
+            className="mt-6 rounded-lg bg-sky-500 px-5 py-2.5 font-semibold text-white shadow-sm transition-colors hover:bg-sky-600"
+          >
+            マイページへ戻る
+          </button>
         </div>
       </main>
     );
@@ -135,12 +146,22 @@ export function FlashcardClient({ sentences }: FlashcardClientProps) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
       <div className="w-full max-w-xl">
-        <div className="mb-4 flex items-center justify-between text-sm text-slate-500">
+        <div className="mb-4 flex items-center justify-between gap-3 text-sm text-slate-500">
           <p>
             {currentIndex + 1} / {sentences.length}
           </p>
-          <p>{isFlipped ? "日本語訳" : "英文"}</p>
+          <button
+            type="button"
+            onClick={goToMypage}
+            className="rounded-lg bg-red-500 px-4 py-2 font-semibold text-white shadow-sm transition-colors hover:bg-red-600"
+          >
+            キャンセル
+          </button>
         </div>
+
+        <p className="mb-2 text-center text-sm text-slate-500">
+          {isFlipped ? "日本語訳" : "英文"}
+        </p>
 
         <button
           type="button"
@@ -173,7 +194,7 @@ export function FlashcardClient({ sentences }: FlashcardClientProps) {
               key={button.value}
               type="button"
               onClick={() => updateStatus(button.value)}
-              disabled={updatingStatus !== null}
+              disabled={isUpdating}
               className={`rounded-lg px-4 py-3 font-semibold text-white shadow-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${button.className}`}
             >
               {button.label}
@@ -181,28 +202,9 @@ export function FlashcardClient({ sentences }: FlashcardClientProps) {
           ))}
         </div>
 
-        {statusMessage && (
-          <p className="mt-3 text-center text-sm text-slate-500">
-            {statusMessage}
-          </p>
+        {errorMessage && (
+          <p className="mt-3 text-center text-sm text-red-500">{errorMessage}</p>
         )}
-
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => moveCard("prev")}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-100"
-          >
-            前へ
-          </button>
-          <button
-            type="button"
-            onClick={() => moveCard("next")}
-            className="rounded-lg bg-sky-500 px-4 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-sky-600"
-          >
-            次へ
-          </button>
-        </div>
       </div>
     </main>
   );

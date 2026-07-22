@@ -65,7 +65,7 @@ async function rewriteWithGemini(content: string, tone: "casual" | "formal") {
     throw new Error("GEMINI_API_KEY is not set");
   }
 
-  const model = process.env.GEMINI_MODEL ?? "gemini-3.5-flash";
+  const model = process.env.GEMINI_MODEL ?? "gemini-flash-latest";
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
     {
